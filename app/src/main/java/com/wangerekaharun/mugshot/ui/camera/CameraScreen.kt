@@ -244,7 +244,9 @@ private fun CameraContent(
                     object : ImageCapture.OnImageSavedCallback {
                         override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                             val uri = Uri.fromFile(outputFile)
-                            onImageCaptured(uri, quality)
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                onImageCaptured(uri, quality)
+                            }
                         }
 
                         override fun onError(exception: ImageCaptureException) {
