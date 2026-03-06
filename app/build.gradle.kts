@@ -47,6 +47,7 @@ kotlin {
     }
 }
 
+
 dependencies {
     // Compose BOM
     implementation(platform(libs.androidx.compose.bom))

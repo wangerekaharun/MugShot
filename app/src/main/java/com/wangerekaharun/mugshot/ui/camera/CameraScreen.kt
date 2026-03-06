@@ -2,6 +2,8 @@ package com.wangerekaharun.mugshot.ui.camera
 
 import android.Manifest
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Matrix
 import android.net.Uri
 import android.os.Build
 import android.os.VibrationEffect
@@ -56,10 +58,13 @@ import com.wangerekaharun.mugshot.analysis.FaceAnalyzer
 import com.wangerekaharun.mugshot.capture.AutoCaptureStateMachine
 import com.wangerekaharun.mugshot.model.CaptureState
 import com.wangerekaharun.mugshot.model.FaceQuality
+import com.wangerekaharun.mugshot.analysis.MediaPipeFaceMeshAnalyzer
 import com.wangerekaharun.mugshot.ui.components.CaptureButton
 import com.wangerekaharun.mugshot.ui.components.FaceOverlay
+import com.wangerekaharun.mugshot.ui.components.FaceMeshOverlay
 import com.wangerekaharun.mugshot.ui.components.GuideOverlay
 import com.wangerekaharun.mugshot.ui.components.RejectionMessageDisplay
+import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarkerResult
 import kotlinx.coroutines.delay
 import java.io.File
 import java.util.concurrent.Executors
@@ -121,8 +126,10 @@ private fun CameraContent(
     var frameHeight by remember { mutableIntStateOf(0) }
     var showFlash by remember { mutableStateOf(false) }
     var hasAutoCaptured by remember { mutableStateOf(false) }
+    var meshResult by remember { mutableStateOf<FaceLandmarkerResult?>(null) }
 
     val stateMachine = remember { AutoCaptureStateMachine() }
+    val meshAnalyzer = remember { MediaPipeFaceMeshAnalyzer(context) }
 
     val imageCapture = remember {
         ImageCapture.Builder()
@@ -144,6 +151,8 @@ private fun CameraContent(
             frameWidth = fw
             frameHeight = fh
             captureState = stateMachine.onNewFrame(quality)
+            // Update mesh result from MediaPipe
+            meshResult = meshAnalyzer.latestResult
         }
     }
 
@@ -151,7 +160,27 @@ private fun CameraContent(
         ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build().apply {
-                setAnalyzer(cameraExecutor, faceAnalyzer)
+                setAnalyzer(cameraExecutor) { imageProxy ->
+                    // Feed MediaPipe with bitmap
+                    val mediaImage = imageProxy.image
+                    if (mediaImage != null) {
+                        try {
+                            val bitmap = imageProxy.toBitmap()
+                            val rotation = imageProxy.imageInfo.rotationDegrees
+                            val rotatedBitmap = if (rotation != 0) {
+                                val matrix = Matrix().apply { postRotate(rotation.toFloat()) }
+                                Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+                            } else {
+                                bitmap
+                            }
+                            meshAnalyzer.detectAsync(rotatedBitmap, System.currentTimeMillis())
+                        } catch (_: Exception) {
+                            // MediaPipe processing is best-effort
+                        }
+                    }
+                    // Then run MLKit face analysis
+                    faceAnalyzer.analyze(imageProxy)
+                }
             }
     }
 
@@ -209,6 +238,7 @@ private fun CameraContent(
     DisposableEffect(Unit) {
         onDispose {
             cameraExecutor.shutdown()
+            meshAnalyzer.close()
         }
     }
 
@@ -232,6 +262,13 @@ private fun CameraContent(
         // Guide overlay
         GuideOverlay(
             captureState = captureState,
+        )
+
+        // MediaPipe face mesh overlay
+        FaceMeshOverlay(
+            result = meshResult,
+            viewWidth = viewWidth,
+            viewHeight = viewHeight,
         )
 
         // Face bounding box overlay

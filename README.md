@@ -1,35 +1,37 @@
-# MugShot -- Checkpoint 3
+# MugShot -- Bonus: MediaPipe Face Mesh
 
-> Auto-capture state machine working!
+> Full app with 478-point face mesh overlay!
 
 ## What's Built
-- Everything from Checkpoints 1 and 2, plus:
-- `AutoCaptureStateMachine` with full state transitions (NoFace -> Poor -> Adjusting -> Stabilizing -> Captured)
-- Countdown ring animation during Stabilizing state (1.5s hold)
-- Shutter flash effect on auto-capture
-- Haptic feedback on capture
-- `CaptureConfirmationScreen` with captured image display, quality grade badge, retake/accept buttons
-- Navigation between camera and confirmation screens
-- Manual capture button still works as fallback
+- Everything from Checkpoint 3 (complete app), plus:
+- `MediaPipeFaceMeshAnalyzer` using MediaPipe Face Landmarker
+- `FaceMeshOverlay` rendering 478 cyan landmark dots over the face in real-time
+- `face_landmarker.task` model (~4MB) in assets
+- MLKit still handles face detection for auto-capture; MediaPipe adds the visual mesh
 
-## What to Explore Next
-- Check out the `bonus-mediapipe` branch to see 478-point face mesh overlay
-- Try tuning quality thresholds in `FaceQuality.kt`
-- Experiment with `stabilizationDurationMs` in `AutoCaptureStateMachine`
-- Try disabling the smile gate: `AutoCaptureStateMachine(enableSmileGate = false)`
+## How It Works
+- The `ImageAnalysis` pipeline converts each frame to a bitmap
+- The bitmap is fed to both MLKit (for quality assessment) and MediaPipe (for mesh rendering)
+- MediaPipe runs in `LIVE_STREAM` mode with async result delivery
+- The mesh overlay renders as a constellation of 478 cyan dots on the face
 
 ## Key Files
 | File | What It Does |
 |------|-------------|
-| `AutoCaptureStateMachine.kt` | State machine driving auto-capture |
-| `CaptureConfirmationScreen.kt` | Shows captured image with quality grade |
-| `CameraScreen.kt` | Full camera UI with all overlays and auto-capture |
-| `FaceQuality.kt` | Quality thresholds -- tune these! |
+| `MediaPipeFaceMeshAnalyzer.kt` | Wraps MediaPipe Face Landmarker |
+| `FaceMeshOverlay.kt` | Renders 478-point face mesh dots |
+| `CameraScreen.kt` | Integrates both MLKit and MediaPipe pipelines |
+
+## Comparison: MLKit vs MediaPipe
+| Feature | MLKit | MediaPipe |
+|---------|-------|-----------|
+| Landmarks | ~7 key points | 478 mesh points |
+| Setup complexity | Simple | Moderate (model file required) |
+| Classification | Smile, eyes open | Not built-in |
+| Best for | Quality assessment | AR effects, mesh visualization |
 
 ## How to Verify
 1. Run the app on your physical device
-2. Face the camera, center your face, and smile
-3. After ~1.5s of holding steady, auto-capture triggers
-4. Confirmation screen shows your photo with a grade (A+/B/C)
-5. Moving during countdown resets it
-6. Manual capture button still works
+2. You should see cyan dots forming a face mesh overlay
+3. All auto-capture features from Checkpoint 3 still work
+4. The mesh disappears when no face is detected
