@@ -1,12 +1,7 @@
 package com.wangerekaharun.mugshot.ui.camera
 
 import android.Manifest
-import android.content.Context
 import android.net.Uri
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -15,15 +10,10 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.core.SurfaceRequest
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -60,7 +50,6 @@ import com.wangerekaharun.mugshot.ui.components.CaptureButton
 import com.wangerekaharun.mugshot.ui.components.FaceOverlay
 import com.wangerekaharun.mugshot.ui.components.GuideOverlay
 import com.wangerekaharun.mugshot.ui.components.RejectionMessageDisplay
-import kotlinx.coroutines.delay
 import java.io.File
 import java.util.concurrent.Executors
 
@@ -119,8 +108,6 @@ private fun CameraContent(
     var viewHeight by remember { mutableStateOf(0f) }
     var frameWidth by remember { mutableIntStateOf(0) }
     var frameHeight by remember { mutableIntStateOf(0) }
-    var showFlash by remember { mutableStateOf(false) }
-    var hasAutoCaptured by remember { mutableStateOf(false) }
 
     val stateMachine = remember { AutoCaptureStateMachine() }
 
@@ -185,27 +172,6 @@ private fun CameraContent(
         }
     }
 
-    // Handle auto-capture
-    LaunchedEffect(captureState) {
-        if (captureState is CaptureState.Captured && !hasAutoCaptured) {
-            hasAutoCaptured = true
-            val quality = (captureState as CaptureState.Captured).quality
-
-            // Haptic feedback
-            triggerHaptic(context)
-
-            // Flash effect
-            showFlash = true
-            delay(200)
-            showFlash = false
-
-            // Take picture
-            takePicture(context, imageCapture, cameraExecutor) { uri ->
-                onImageCaptured(uri, quality)
-            }
-        }
-    }
-
     DisposableEffect(Unit) {
         onDispose {
             cameraExecutor.shutdown()
@@ -265,69 +231,31 @@ private fun CameraContent(
             )
         }
 
-        // Capture button (manual fallback)
+        // Capture button (manual only)
         CaptureButton(
             onClick = {
                 val quality = faceQuality ?: FaceQuality()
-                triggerHaptic(context)
-                takePicture(context, imageCapture, cameraExecutor) { uri ->
-                    onImageCaptured(uri, quality)
-                }
+                val outputFile = File(context.cacheDir, "mugshot_${System.currentTimeMillis()}.jpg")
+                val outputOptions = ImageCapture.OutputFileOptions.Builder(outputFile).build()
+
+                imageCapture.takePicture(
+                    outputOptions,
+                    cameraExecutor,
+                    object : ImageCapture.OnImageSavedCallback {
+                        override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                            val uri = Uri.fromFile(outputFile)
+                            onImageCaptured(uri, quality)
+                        }
+
+                        override fun onError(exception: ImageCaptureException) {
+                            exception.printStackTrace()
+                        }
+                    }
+                )
             },
-            enabled = captureState !is CaptureState.Captured,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 48.dp),
         )
-
-        // Shutter flash effect
-        AnimatedVisibility(
-            visible = showFlash,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White)
-            )
-        }
     }
-}
-
-private fun triggerHaptic(context: Context) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-        val vibrator = vibratorManager.defaultVibrator
-        vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
-    } else {
-        @Suppress("DEPRECATION")
-        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
-    }
-}
-
-private fun takePicture(
-    context: Context,
-    imageCapture: ImageCapture,
-    executor: java.util.concurrent.ExecutorService,
-    onSaved: (Uri) -> Unit,
-) {
-    val outputFile = File(context.cacheDir, "mugshot_${System.currentTimeMillis()}.jpg")
-    val outputOptions = ImageCapture.OutputFileOptions.Builder(outputFile).build()
-
-    imageCapture.takePicture(
-        outputOptions,
-        executor,
-        object : ImageCapture.OnImageSavedCallback {
-            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                val uri = Uri.fromFile(outputFile)
-                onSaved(uri)
-            }
-
-            override fun onError(exception: ImageCaptureException) {
-                exception.printStackTrace()
-            }
-        }
-    )
 }
