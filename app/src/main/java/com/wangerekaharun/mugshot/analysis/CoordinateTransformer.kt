@@ -4,6 +4,16 @@ import android.graphics.RectF
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 
+/**
+ * TODO: Workshop Step 2 -- Implement coordinate transformation
+ *
+ * This transformer will convert coordinates from:
+ * - ImageProxy coordinate space -> Compose UI coordinate space
+ *
+ * It must handle:
+ * - Scale differences between image and view
+ * - Front camera horizontal mirroring
+ */
 class CoordinateTransformer(
     private val imageWidth: Int,
     private val imageHeight: Int,
@@ -11,39 +21,13 @@ class CoordinateTransformer(
     private val viewHeight: Float,
     private val isFrontCamera: Boolean = true,
 ) {
-    private val scaleX: Float = viewWidth / imageWidth.toFloat()
-    private val scaleY: Float = viewHeight / imageHeight.toFloat()
-
     fun transformRect(imageRect: RectF): Rect {
-        val left: Float
-        val right: Float
-
-        if (isFrontCamera) {
-            left = viewWidth - (imageRect.right * scaleX)
-            right = viewWidth - (imageRect.left * scaleX)
-        } else {
-            left = imageRect.left * scaleX
-            right = imageRect.right * scaleX
-        }
-
-        val top = imageRect.top * scaleY
-        val bottom = imageRect.bottom * scaleY
-
-        return Rect(
-            left = left,
-            top = top,
-            right = right,
-            bottom = bottom,
-        )
+        // TODO: Implement coordinate transformation
+        return Rect.Zero
     }
 
     fun transformPoint(x: Float, y: Float): Offset {
-        val transformedX = if (isFrontCamera) {
-            viewWidth - (x * scaleX)
-        } else {
-            x * scaleX
-        }
-        val transformedY = y * scaleY
-        return Offset(transformedX, transformedY)
+        // TODO: Implement point transformation
+        return Offset.Zero
     }
 }

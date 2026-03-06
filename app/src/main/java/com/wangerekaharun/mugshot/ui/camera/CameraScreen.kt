@@ -4,7 +4,6 @@ import android.Manifest
 import android.net.Uri
 import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,32 +22,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import com.wangerekaharun.mugshot.analysis.CoordinateTransformer
-import com.wangerekaharun.mugshot.analysis.FaceAnalyzer
-import com.wangerekaharun.mugshot.capture.AutoCaptureStateMachine
 import com.wangerekaharun.mugshot.model.CaptureState
 import com.wangerekaharun.mugshot.model.FaceQuality
 import com.wangerekaharun.mugshot.ui.components.CaptureButton
-import com.wangerekaharun.mugshot.ui.components.FaceOverlay
 import com.wangerekaharun.mugshot.ui.components.GuideOverlay
-import com.wangerekaharun.mugshot.ui.components.RejectionMessageDisplay
 import java.io.File
 import java.util.concurrent.Executors
 
@@ -101,15 +88,6 @@ private fun CameraContent(
 
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
     var surfaceRequest by remember { mutableStateOf<SurfaceRequest?>(null) }
-    var faceQuality by remember { mutableStateOf<FaceQuality?>(null) }
-    var captureState by remember { mutableStateOf<CaptureState>(CaptureState.NoFace) }
-    var transformedBoundingBox by remember { mutableStateOf<Rect?>(null) }
-    var viewWidth by remember { mutableStateOf(0f) }
-    var viewHeight by remember { mutableStateOf(0f) }
-    var frameWidth by remember { mutableIntStateOf(0) }
-    var frameHeight by remember { mutableIntStateOf(0) }
-
-    val stateMachine = remember { AutoCaptureStateMachine() }
 
     val imageCapture = remember {
         ImageCapture.Builder()
@@ -125,23 +103,6 @@ private fun CameraContent(
         }
     }
 
-    val faceAnalyzer = remember {
-        FaceAnalyzer { quality, fw, fh ->
-            faceQuality = quality
-            frameWidth = fw
-            frameHeight = fh
-            captureState = stateMachine.onNewFrame(quality)
-        }
-    }
-
-    val imageAnalysis = remember {
-        ImageAnalysis.Builder()
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .build().apply {
-                setAnalyzer(cameraExecutor, faceAnalyzer)
-            }
-    }
-
     // Bind camera use cases
     LaunchedEffect(Unit) {
         val cameraProvider = ProcessCameraProvider.getInstance(context).get()
@@ -153,23 +114,8 @@ private fun CameraContent(
             cameraSelector,
             preview,
             imageCapture,
-            imageAnalysis,
+            // TODO: Workshop Step 2 -- Add ImageAnalysis use case here
         )
-    }
-
-    // Transform bounding box coordinates
-    LaunchedEffect(faceQuality, viewWidth, viewHeight, frameWidth, frameHeight) {
-        if (viewWidth > 0 && viewHeight > 0 && frameWidth > 0 && frameHeight > 0 && faceQuality != null) {
-            val transformer = CoordinateTransformer(
-                imageWidth = frameWidth,
-                imageHeight = frameHeight,
-                viewWidth = viewWidth,
-                viewHeight = viewHeight,
-            )
-            transformedBoundingBox = transformer.transformRect(faceQuality!!.boundingBox)
-        } else {
-            transformedBoundingBox = null
-        }
     }
 
     DisposableEffect(Unit) {
@@ -179,14 +125,7 @@ private fun CameraContent(
     }
 
     // UI
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .onGloballyPositioned { coordinates ->
-                viewWidth = coordinates.size.width.toFloat()
-                viewHeight = coordinates.size.height.toFloat()
-            }
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         // Camera preview
         surfaceRequest?.let { request ->
             CameraXViewfinder(
@@ -195,46 +134,14 @@ private fun CameraContent(
             )
         }
 
-        // Guide overlay
+        // Guide overlay (static white oval)
         GuideOverlay(
-            captureState = captureState,
+            captureState = CaptureState.NoFace,
         )
 
-        // Face bounding box overlay
-        FaceOverlay(
-            boundingBox = transformedBoundingBox,
-            captureState = captureState,
-        )
-
-        // Rejection messages
-        RejectionMessageDisplay(
-            quality = faceQuality,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .statusBarsPadding()
-                .padding(top = 16.dp),
-        )
-
-        // Debug quality readout
-        faceQuality?.let { q ->
-            Text(
-                text = "Yaw: %.1f  Pitch: %.1f  Smile: %.0f%%".format(
-                    q.eulerAngleY, q.eulerAngleX, q.smilingProbability * 100
-                ),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White.copy(alpha = 0.7f),
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .statusBarsPadding()
-                    .padding(start = 8.dp, top = 80.dp),
-            )
-        }
-
-        // Capture button (manual only)
+        // Capture button
         CaptureButton(
             onClick = {
-                val quality = faceQuality ?: FaceQuality()
                 val outputFile = File(context.cacheDir, "mugshot_${System.currentTimeMillis()}.jpg")
                 val outputOptions = ImageCapture.OutputFileOptions.Builder(outputFile).build()
 
@@ -244,7 +151,7 @@ private fun CameraContent(
                     object : ImageCapture.OnImageSavedCallback {
                         override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                             val uri = Uri.fromFile(outputFile)
-                            onImageCaptured(uri, quality)
+                            onImageCaptured(uri, FaceQuality())
                         }
 
                         override fun onError(exception: ImageCaptureException) {
