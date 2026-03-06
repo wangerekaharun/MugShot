@@ -1,34 +1,37 @@
-# MugShot -- Checkpoint 1
+# MugShot -- Checkpoint 2
 
-> Camera preview and capture working!
+> Face detection and quality feedback working!
 
 ## What's Built
-- CameraX Preview with Compose ViewFinder (`CameraXViewfinder`)
-- ImageCapture use case bound to front camera
-- Manual capture button (saves JPEG to cache)
-- Static white oval guide overlay
-- Accompanist camera permission flow
+- Everything from Checkpoint 1, plus:
+- MLKit face detection via `FaceAnalyzer` (processes every 3rd frame)
+- `CoordinateTransformer` mapping image coords to Compose coords (with front camera mirroring)
+- Face bounding box overlay (color-coded: red/yellow/green)
+- Guide oval that changes color based on face quality state
+- Playful rejection messages with debounced display
+- Debug quality readout (euler angles, smile probability)
+- Manual capture still works
 
-## What's Next: Add Face Detection (Step 2)
+## What's Next: Build Auto-Capture (Step 3)
 In this step you'll:
-1. Implement `FaceAnalyzer.kt` with MLKit face detection
-2. Implement `CoordinateTransformer.kt` for mapping image coords to screen coords
-3. Add `FaceOverlay.kt` to draw bounding boxes
-4. Add `RejectionMessageDisplay.kt` for playful rejection messages
-5. Update `GuideOverlay.kt` to change color based on quality state
-6. Bind `ImageAnalysis` as a third use case in `CameraScreen.kt`
+1. Implement `AutoCaptureStateMachine.kt` with state transitions (NoFace -> Poor -> Adjusting -> Stabilizing -> Captured)
+2. Add countdown ring animation during Stabilizing state
+3. Add shutter flash effect on capture
+4. Add haptic feedback on capture
+5. Build `CaptureConfirmationScreen.kt` with quality grade badge
+6. Wire up navigation between camera and confirmation screens
 
 ## Key Files to Open
 | File | Status |
 |------|--------|
-| `CameraScreen.kt` | Working -- camera preview + capture |
-| `FaceAnalyzer.kt` | Stub -- implement MLKit here |
-| `CoordinateTransformer.kt` | Stub -- implement transforms here |
-| `FaceOverlay.kt` | Stub -- implement bounding box here |
-| `RejectionMessageDisplay.kt` | Stub -- implement messages here |
+| `AutoCaptureStateMachine.kt` | Stub -- implement state machine here |
+| `CaptureConfirmationScreen.kt` | Stub -- implement confirmation UI here |
+| `CameraScreen.kt` | Working -- add auto-capture triggering |
+| `GuideOverlay.kt` | Working -- add countdown ring |
 
 ## How to Verify
 1. Run the app on your physical device
-2. Camera preview should show your face
-3. Tap the capture button -- image saves (check logcat)
-4. White oval guide is visible on screen
+2. Face bounding box should appear and track your face
+3. Bounding box color changes based on quality (red -> yellow -> green)
+4. Rejection messages appear when conditions aren't met
+5. Manual capture button still works
