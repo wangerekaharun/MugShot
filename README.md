@@ -1,61 +1,34 @@
-# MugShot
+# MugShot -- Checkpoint 1
 
-> The camera that refuses to take a bad photo.
+> Camera preview and capture working!
 
-Workshop project for **"Building Intelligent Camera Experiences on Android: CameraX meets MLKit & MediaPipe"** at Build with AI -- GDG Kisumu.
+## What's Built
+- CameraX Preview with Compose ViewFinder (`CameraXViewfinder`)
+- ImageCapture use case bound to front camera
+- Manual capture button (saves JPEG to cache)
+- Static white oval guide overlay
+- Accompanist camera permission flow
 
-## Setup Instructions
+## What's Next: Add Face Detection (Step 2)
+In this step you'll:
+1. Implement `FaceAnalyzer.kt` with MLKit face detection
+2. Implement `CoordinateTransformer.kt` for mapping image coords to screen coords
+3. Add `FaceOverlay.kt` to draw bounding boxes
+4. Add `RejectionMessageDisplay.kt` for playful rejection messages
+5. Update `GuideOverlay.kt` to change color based on quality state
+6. Bind `ImageAnalysis` as a third use case in `CameraScreen.kt`
 
-### Prerequisites
-- Android Studio (latest stable, Panda or newer)
-- Physical Android device with USB debugging enabled
-- USB cable/ Wifi Debugging enabled for wireless deployment
+## Key Files to Open
+| File | Status |
+|------|--------|
+| `CameraScreen.kt` | Working -- camera preview + capture |
+| `FaceAnalyzer.kt` | Stub -- implement MLKit here |
+| `CoordinateTransformer.kt` | Stub -- implement transforms here |
+| `FaceOverlay.kt` | Stub -- implement bounding box here |
+| `RejectionMessageDisplay.kt` | Stub -- implement messages here |
 
-### Steps
-1. Clone this repo:
-   ```bash
-   git clone https://github.com/wangerekaharun/MugShot.git
-   cd MugShot
-   ```
-2. Open in Android Studio
-3. Wait for Gradle sync to complete
-4. Connect your physical device
-5. Run the app -- you should see "Ready to build MugShot!"
-
-### If You Fall Behind
-Each workshop checkpoint has a corresponding branch. If you get stuck:
-```bash
-git stash
-git checkout checkpoint-1   # or checkpoint-2, checkpoint-3
-```
-
-### Branches
-| Branch | What's Built |
-|--------|-------------|
-| `main` | Starter scaffold (you are here) |
-| `checkpoint-1` | CameraX preview + capture |
-| `checkpoint-2` | MLKit face detection + overlay |
-| `checkpoint-3` | Auto-capture state machine |
-| `bonus-mediapipe` | MediaPipe face mesh demo |
-
-## Workshop Outline
-1. **Camera Preview:** Set up CameraX ViewFinder with Compose
-2. **Face Detection:** Add MLKit + bounding box overlay
-3. **Auto-Capture:** Build the smart capture state machine
-4. **MediaPipe Demo:** See 478-point face mesh in action
-
-## What You'll Build
-Open `CameraScreen.kt` -- that's where we start!
-
-## Key Constraints
-- Physical Android devices required (no emulator camera)
-- No network calls (MLKit runs on-device)
-- Single Activity with Compose Navigation
-- Minimum SDK 24
-
-## Tech Stack
-- **CameraX** with Compose ViewFinder (`camera-compose`)
-- **MLKit** Face Detection (on-device)
-- **MediaPipe** Face Landmarker (bonus)
-- **Jetpack Compose** with Material 3
-- **Accompanist** for runtime permissions
+## How to Verify
+1. Run the app on your physical device
+2. Camera preview should show your face
+3. Tap the capture button -- image saves (check logcat)
+4. White oval guide is visible on screen
