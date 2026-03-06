@@ -359,7 +359,9 @@ private fun takePicture(
         object : ImageCapture.OnImageSavedCallback {
             override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                 val uri = Uri.fromFile(outputFile)
-                onSaved(uri)
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    onSaved(uri)
+                }
             }
 
             override fun onError(exception: ImageCaptureException) {
