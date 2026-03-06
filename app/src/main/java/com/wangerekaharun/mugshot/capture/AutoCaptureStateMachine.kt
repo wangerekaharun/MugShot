@@ -3,31 +3,78 @@ package com.wangerekaharun.mugshot.capture
 import com.wangerekaharun.mugshot.model.CaptureState
 import com.wangerekaharun.mugshot.model.FaceQuality
 
-/**
- * TODO: Workshop Step 3 -- Implement the auto-capture state machine
- *
- * States: NoFace -> Poor -> Adjusting -> Stabilizing -> Captured
- *
- * Transition rules:
- * - NoFace -> Poor: face detected
- * - Poor -> Adjusting: >= 3 of 5 quality signals pass
- * - Adjusting -> Stabilizing: all signals pass for N consecutive frames
- * - Stabilizing -> Captured: all signals hold for stabilizationDurationMs
- * - Any -> NoFace: face lost
- */
 class AutoCaptureStateMachine(
     private val stabilizationDurationMs: Long = 1500L,
     private val requiredConsecutiveFrames: Int = 3,
     private val enableSmileGate: Boolean = true,
 ) {
-    fun getCurrentState(): CaptureState = CaptureState.NoFace
+    private var currentState: CaptureState = CaptureState.NoFace
+    private var consecutiveGoodFrames: Int = 0
+    private var stabilizationStartTime: Long = 0L
+
+    fun getCurrentState(): CaptureState = currentState
 
     fun onNewFrame(quality: FaceQuality?): CaptureState {
-        // TODO: Implement state transitions
-        return if (quality == null) CaptureState.NoFace else CaptureState.Poor(quality)
+        if (currentState is CaptureState.Captured) {
+            return currentState
+        }
+
+        if (quality == null) {
+            consecutiveGoodFrames = 0
+            stabilizationStartTime = 0L
+            currentState = CaptureState.NoFace
+            return currentState
+        }
+
+        val allGood = if (enableSmileGate) quality.isAllGood else quality.isAllGoodExceptSmile
+
+        currentState = when {
+            allGood -> handleAllGood(quality)
+            quality.passingSignalCount >= 3 -> handleAdjusting(quality)
+            else -> handlePoor(quality)
+        }
+
+        return currentState
+    }
+
+    private fun handleAllGood(quality: FaceQuality): CaptureState {
+        consecutiveGoodFrames++
+
+        if (consecutiveGoodFrames >= requiredConsecutiveFrames) {
+            if (stabilizationStartTime == 0L) {
+                stabilizationStartTime = System.currentTimeMillis()
+            }
+
+            val elapsed = System.currentTimeMillis() - stabilizationStartTime
+            return if (elapsed >= stabilizationDurationMs) {
+                CaptureState.Captured(quality)
+            } else {
+                CaptureState.Stabilizing(
+                    quality = quality,
+                    startTimeMillis = stabilizationStartTime,
+                    consecutiveGoodFrames = consecutiveGoodFrames,
+                )
+            }
+        }
+
+        return CaptureState.Adjusting(quality)
+    }
+
+    private fun handleAdjusting(quality: FaceQuality): CaptureState {
+        consecutiveGoodFrames = 0
+        stabilizationStartTime = 0L
+        return CaptureState.Adjusting(quality)
+    }
+
+    private fun handlePoor(quality: FaceQuality): CaptureState {
+        consecutiveGoodFrames = 0
+        stabilizationStartTime = 0L
+        return CaptureState.Poor(quality)
     }
 
     fun reset() {
-        // TODO: Reset state
+        currentState = CaptureState.NoFace
+        consecutiveGoodFrames = 0
+        stabilizationStartTime = 0L
     }
 }

@@ -1,37 +1,35 @@
-# MugShot -- Checkpoint 2
+# MugShot -- Checkpoint 3
 
-> Face detection and quality feedback working!
+> Auto-capture state machine working!
 
 ## What's Built
-- Everything from Checkpoint 1, plus:
-- MLKit face detection via `FaceAnalyzer` (processes every 3rd frame)
-- `CoordinateTransformer` mapping image coords to Compose coords (with front camera mirroring)
-- Face bounding box overlay (color-coded: red/yellow/green)
-- Guide oval that changes color based on face quality state
-- Playful rejection messages with debounced display
-- Debug quality readout (euler angles, smile probability)
-- Manual capture still works
+- Everything from Checkpoints 1 and 2, plus:
+- `AutoCaptureStateMachine` with full state transitions (NoFace -> Poor -> Adjusting -> Stabilizing -> Captured)
+- Countdown ring animation during Stabilizing state (1.5s hold)
+- Shutter flash effect on auto-capture
+- Haptic feedback on capture
+- `CaptureConfirmationScreen` with captured image display, quality grade badge, retake/accept buttons
+- Navigation between camera and confirmation screens
+- Manual capture button still works as fallback
 
-## What's Next: Build Auto-Capture (Step 3)
-In this step you'll:
-1. Implement `AutoCaptureStateMachine.kt` with state transitions (NoFace -> Poor -> Adjusting -> Stabilizing -> Captured)
-2. Add countdown ring animation during Stabilizing state
-3. Add shutter flash effect on capture
-4. Add haptic feedback on capture
-5. Build `CaptureConfirmationScreen.kt` with quality grade badge
-6. Wire up navigation between camera and confirmation screens
+## What to Explore Next
+- Check out the `bonus-mediapipe` branch to see 478-point face mesh overlay
+- Try tuning quality thresholds in `FaceQuality.kt`
+- Experiment with `stabilizationDurationMs` in `AutoCaptureStateMachine`
+- Try disabling the smile gate: `AutoCaptureStateMachine(enableSmileGate = false)`
 
-## Key Files to Open
-| File | Status |
-|------|--------|
-| `AutoCaptureStateMachine.kt` | Stub -- implement state machine here |
-| `CaptureConfirmationScreen.kt` | Stub -- implement confirmation UI here |
-| `CameraScreen.kt` | Working -- add auto-capture triggering |
-| `GuideOverlay.kt` | Working -- add countdown ring |
+## Key Files
+| File | What It Does |
+|------|-------------|
+| `AutoCaptureStateMachine.kt` | State machine driving auto-capture |
+| `CaptureConfirmationScreen.kt` | Shows captured image with quality grade |
+| `CameraScreen.kt` | Full camera UI with all overlays and auto-capture |
+| `FaceQuality.kt` | Quality thresholds -- tune these! |
 
 ## How to Verify
 1. Run the app on your physical device
-2. Face bounding box should appear and track your face
-3. Bounding box color changes based on quality (red -> yellow -> green)
-4. Rejection messages appear when conditions aren't met
-5. Manual capture button still works
+2. Face the camera, center your face, and smile
+3. After ~1.5s of holding steady, auto-capture triggers
+4. Confirmation screen shows your photo with a grade (A+/B/C)
+5. Moving during countdown resets it
+6. Manual capture button still works
