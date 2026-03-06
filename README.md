@@ -2,19 +2,19 @@
 
 > The camera that refuses to take a bad photo.
 
-Workshop project for **"Building Intelligent Camera Experiences on Android: CameraX meets MLKit & MediaPipe"** at Build with AI -- GDG Kisumu Dala.
+Workshop project for **"Building Intelligent Camera Experiences on Android: CameraX meets MLKit & MediaPipe"** at Build with AI -- GDG Kisumu.
 
 ## Setup Instructions
 
 ### Prerequisites
-- Android Studio (latest stable, Ladybug or newer)
+- Android Studio (latest stable, Panda or newer)
 - Physical Android device with USB debugging enabled
-- USB cable
+- USB cable/ Wifi Debugging enabled for wireless deployment
 
 ### Steps
 1. Clone this repo:
    ```bash
-   git clone https://github.com/<your-username>/MugShot.git
+   git clone https://github.com/wangerekaharun/MugShot.git
    cd MugShot
    ```
 2. Open in Android Studio
@@ -39,10 +39,10 @@ git checkout checkpoint-1   # or checkpoint-2, checkpoint-3
 | `bonus-mediapipe` | MediaPipe face mesh demo |
 
 ## Workshop Outline
-1. **Camera Preview (25 min):** Set up CameraX ViewFinder with Compose
-2. **Face Detection (30 min):** Add MLKit + bounding box overlay
-3. **Auto-Capture (30 min):** Build the smart capture state machine
-4. **MediaPipe Demo (15 min):** See 478-point face mesh in action
+1. **Camera Preview:** Set up CameraX ViewFinder with Compose
+2. **Face Detection:** Add MLKit + bounding box overlay
+3. **Auto-Capture:** Build the smart capture state machine
+4. **MediaPipe Demo:** See 478-point face mesh in action
 
 ## What You'll Build
 Open `CameraScreen.kt` -- that's where we start!
