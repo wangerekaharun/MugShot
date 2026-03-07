@@ -1255,8 +1255,8 @@ fun FaceMeshOverlay(
         result?.faceLandmarks()?.firstOrNull()?.let { landmarks ->
             landmarks.forEach { landmark ->
                 drawCircle(
-                    color = Color.Cyan.copy(alpha = 0.7f),
-                    radius = 2f,
+                    color = Color.Cyan.copy(alpha = 0.9f),
+                    radius = 4f,
                     center = Offset(landmark.x() * viewWidth, landmark.y() * viewHeight),
                 )
             }
