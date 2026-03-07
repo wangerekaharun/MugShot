@@ -44,7 +44,7 @@ fun GuideOverlay(
             color = guideColor,
             topLeft = Offset(centerX - ovalWidth / 2, centerY - ovalHeight / 2),
             size = Size(ovalWidth, ovalHeight),
-            style = Stroke(width = 3f),
+            style = Stroke(width = 8f),
         )
 
         // Countdown ring during stabilizing
