@@ -292,8 +292,8 @@ private fun CameraContent(
                 text = "Yaw: %.1f  Pitch: %.1f  Smile: %.0f%%".format(
                     q.eulerAngleY, q.eulerAngleX, q.smilingProbability * 100
                 ),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
                 color = Color.White.copy(alpha = 0.7f),
                 modifier = Modifier
                     .align(Alignment.TopStart)
