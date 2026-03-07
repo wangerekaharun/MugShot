@@ -21,8 +21,8 @@ fun FaceMeshOverlay(
                 val x = landmark.x() * viewWidth
                 val y = landmark.y() * viewHeight
                 drawCircle(
-                    color = Color.Cyan.copy(alpha = 0.7f),
-                    radius = 2f,
+                    color = Color.Cyan.copy(alpha = 0.9f),
+                    radius = 4f,
                     center = Offset(x, y),
                 )
             }
