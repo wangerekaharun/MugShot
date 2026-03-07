@@ -36,7 +36,7 @@ fun FaceOverlay(
                 topLeft = Offset(box.left, box.top),
                 size = Size(box.width, box.height),
                 cornerRadius = CornerRadius(12f, 12f),
-                style = Stroke(width = 4f),
+                style = Stroke(width = 8f),
             )
         }
     }

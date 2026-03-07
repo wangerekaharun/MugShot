@@ -30,7 +30,7 @@ fun GuideOverlay(
             color = Color.White.copy(alpha = 0.3f),
             topLeft = Offset(centerX - ovalWidth / 2, centerY - ovalHeight / 2),
             size = Size(ovalWidth, ovalHeight),
-            style = Stroke(width = 3f),
+            style = Stroke(width = 8f),
         )
     }
 }
